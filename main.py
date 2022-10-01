@@ -3,10 +3,10 @@ from pprint import pprint
 import json
 from tqdm import tqdm
 
-
 vk_id = input("Введите id VK: ")
 vk_token = input("Введите токен VK: ")
 ya_token = input("Введите токен Яндекс Диска: ")
+folder_name = input('Введите название папки на Яндекс Диске: ')
 
 
 class VK:
@@ -32,7 +32,7 @@ class VK:
         all_photos = req['response']['items']
         for photo in all_photos:
             new_dict = {
-                'file_name': f"{photo['likes']['count']}.jpg",
+                'file_name': f"{photo['likes']['count']}-{photo['date']}.jpg",
                 'URL': photo['sizes'][-1]['url'],
                 'size': photo['sizes'][-1]['type']
             }
@@ -54,12 +54,18 @@ class YaUploader:
             'Content-Type': 'application/json'
         }
 
-    def upload_file_to_disk(self, disk_file_path='my_photos'):
+    def create_folder(self, folder_name):
+        params = {
+            'path': f'{folder_name}'
+        }
+        requests.put(self.url, headers=self.headers, params=params)
+
+    def upload_file_to_disk(self, folder_name):
         upload_url = "https://cloud-api.yandex.net/v1/disk/resources/upload"
         for file in tqdm(data):
             params = {
                 'url': file['URL'],
-                'path': f"{disk_file_path}/{file['file_name']}"
+                'path': f"{folder_name}/{file['file_name']}"
             }
             response = requests.post(upload_url,
                                      params=params,
@@ -75,4 +81,5 @@ if __name__ == '__main__':
     pprint(data)
     user_vk.get_users_photos()
     user_ya = YaUploader(ya_token)
-    user_ya.upload_file_to_disk()
+    user_ya.create_folder(folder_name)
+    user_ya.upload_file_to_disk(folder_name)
